@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+"""
+https://qiita.com/akih1992/items/cdb39e5a23dff9b13498
+"""
+
 import numpy as np
 from collections import defaultdict
 
