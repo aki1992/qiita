@@ -90,6 +90,11 @@ class TowerOfHanoiEnvironment(object):
 
 
 class QLearning(object):
+    """
+    Params:
+        alpha : learning rate
+        gamma : discount rate
+    """
     def __init__(self, env, actor, alpha=0.01, gamma=0.99):
         self.env = env
         self.actor = actor
