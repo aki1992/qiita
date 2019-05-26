@@ -60,7 +60,6 @@ class TowerOfHanoiEnvironment(object):
         if (len(self.pole[1]) == self.n_disks) or (len(self.pole[2]) == self.n_disks):
             is_terminal = True
             reward = 1
-            
         elif self.curr_step == self.max_episode_steps:
             is_terminal = True
         
