@@ -172,7 +172,7 @@ if __name__ == '__main__':
             ))
     print('---- Finish Training ----')
 
-    plt.plot(np.arange(n_episodes) + 1, episode_steps_traj, label='learning')
+    plt.plot(np.arange(1, n_episodes + 1), episode_steps_traj, label='learning')
     plt.plot([1, n_episodes + 1], [2**5-1, 2**5-1], label='shortest')
     plt.xlabel('episode')
     plt.ylabel('episode steps')
