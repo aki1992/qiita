@@ -131,10 +131,11 @@ class QLearning(object):
 
 
 class EpsilonGreedyActor(object):
-    def __init__(self, epsilon=0.1, random_state=0):
+    def __init__(self, epsilon=0.1, random_state=None):
         self.epsilon = epsilon
         self.random = np.random
-        self.random.seed(random_state)
+        if random_state is not None:
+            self.random.seed(random_state)
 
     def act_without_exploration(self, q_values):
         max_q = max(q_values)
