@@ -176,7 +176,7 @@ if __name__ == '__main__':
     print('---- Finish Training ----')
     print(datetime.datetime.now())
 
-    mean_traj = [np.mean(episode_steps_traj[max(0, i - 99):i + 1]) for i in range(10000)]
+    mean_traj = [np.mean(episode_steps_traj[max(0, i - 100):i]) for i in range(1, 10001)]
     plt.plot(np.arange(1, 10001), episode_steps_traj, label='observed')
     plt.plot(np.arange(1, 10001), mean_traj, label='mean')
     plt.plot([1, 10001], [33, 33], label='shortest')
