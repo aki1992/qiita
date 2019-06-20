@@ -2,9 +2,11 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+from datetime import datetime
 from collections import namedtuple
 import pickle
 import copy
+from sklearn.metrics import confusion_matrix
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,7 +49,7 @@ class RandomSamplingTrainer(object):
         self.update(idx_list, data_list)
       
     def sample(self, batch_size):
-        idx_batch = np.random.choice(len(self.buffer), batch_size, replace=False)
+        idx_batch = np.random.choice(len(self.buffer), batch_size)
         return idx_batch, [self.buffer[i] for i in idx_batch]
         
     def update(self, idx_list, data_list):
@@ -66,7 +68,7 @@ class RandomSamplingTrainer(object):
 class PrioritizedSamplingTrainer(RandomSamplingTrainer):
     def set_dataset(self, dataset, init_loss=100, epsilon=10**(-4)):
         self.buffer = copy.copy(dataset)
-        self.loss_buffer = [init_loss for _ in range(len(dataset))]
+        self.loss_buffer = np.array([init_loss for _ in range(len(dataset))], dtype=np.float)
         self.epsilon = epsilon
 
     def train(self, batch_size):
@@ -77,22 +79,14 @@ class PrioritizedSamplingTrainer(RandomSamplingTrainer):
 
     def sample(self, batch_size):
         sum_loss = sum(self.loss_buffer)
-        rand_list = np.random.uniform(0, sum_loss, batch_size)
+        probs = self.loss_buffer / sum_loss
+        idx_batch = np.random.choice(len(self.buffer), batch_size, p=probs)
         
-        idx_batch = []
-        for rand in rand_list:
-            tmp_sum_loss = 0
-            for i, error in enumerate(self.loss_buffer):
-                tmp_sum_loss += error
-                if tmp_sum_loss >= rand:
-                    idx_batch.append(i)
-                    break
         return idx_batch, [self.buffer[i] for i in idx_batch]
 
     def update_loss_buffer(self, idx_list, loss_list):
         for i, loss in zip(idx_list, loss_list):
             self.loss_buffer[i] = loss + self.epsilon
-
 
 class CNN(nn.Module):
     def __init__(self):
@@ -140,7 +134,6 @@ if __name__ == '__main__':
 
         model = CNN().to(device)
         loss_func = nn.CrossEntropyLoss(reduce=False)
-        #optimizer = optim.SGD(model.parameters(), lr=0.01)
         optimizer = optim.Adam(model.parameters())
 
         trainer = traier_object(model, loss_func, optimizer)
@@ -148,7 +141,7 @@ if __name__ == '__main__':
     
         print(method)
         print('---- Start Training ----')
-        for _ in range(2000):
+        for _ in range(20000):
             trainer.train(batch_size=120)
             #For varidation
             test_loss = compute_loss(model, loss_func, test_features, test_targets).detach().cpu().numpy().mean()
@@ -158,10 +151,12 @@ if __name__ == '__main__':
                 print(f'#updates:{trainer.n_updates} loss:{test_loss}')
         print('---- Finish Training ----')
     
-    plt.plot(np.arange(1, 2001), test_loss_traj['Random'], label='Random')
-    plt.plot(np.arange(1, 2001), test_loss_traj['Prioritized'], label='Prioritized')
+    loss_traj_random_smoothing = [np.mean(test_loss_traj['Random'][max(0, i-99):i]) for i in range(1, 20001)]
+    loss_traj_prioritized_smoothing = [np.mean(test_loss_traj['Prioritized'][max(0, i-99):i]) for i in range(1, 20001)]
+    plt.plot(np.arange(1, 20001), loss_traj_random_smoothing, label='Random')
+    plt.plot(np.arange(1, 20001), loss_traj_prioritized_smoothing, label='Prioritized')
     plt.legend()
     plt.title('Loss for test dataset')
     plt.xlabel('#update')
-    plt.ylim(0, 5)
+    plt.ylim(0, 1)
     plt.show()
